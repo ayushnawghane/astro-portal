@@ -1,0 +1,13 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+/src/generated/prisma
+/dist
+*.tsbuildinfo
+
+# Auto-generated Prisma AI-assistant reference docs (regenerate via `prisma init`/`prisma generate`)
+/.claude
+/.agents
+/.windsurf
+skills-lock.json

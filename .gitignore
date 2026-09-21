@@ -1,0 +1,6 @@
+# OS / editor noise (project-specific ignores live in backend/.gitignore and frontend/.gitignore)
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/

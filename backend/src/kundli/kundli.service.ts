@@ -51,9 +51,7 @@ export class KundliService {
         houseAnalysis: toJson(chart.houses),
         dashaInfo: toJson(chart.dashas),
         doshas: toJson(chart.doshas),
-        // Full classical yoga identification (hundreds of named combinations)
-        // is not implemented yet — tracked as a follow-up.
-        yogas: toJson([]),
+        yogas: toJson(chart.yogas),
       },
     });
   }

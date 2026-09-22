@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DateTime } from 'luxon';
 import sweph from 'sweph';
 import { RASHIS, NAKSHATRAS, NAKSHATRA_SPAN_DEG, GRAHAS, VIMSHOTTARI_LORD_SEQUENCE, VIMSHOTTARI_PERIOD_YEARS } from './astrology.constants.js';
-import type { AscendantInfo, BirthChartResult, DashaPeriod, DoshaResult, PlanetPosition } from './astrology.types.js';
+import type { AscendantInfo, BirthChartResult, DashaPeriod, DoshaResult, PlanetPosition, YogaResult } from './astrology.types.js';
 import type { Graha } from './astrology.constants.js';
 
 const PLANET_CODES: Record<Exclude<Graha, 'Ketu'>, number> = {
@@ -23,6 +23,17 @@ const CALC_FLAGS = sweph.constants.SEFLG_MOSEPH | sweph.constants.SEFLG_SIDEREAL
 function normalizeDegrees(deg: number): number {
   return ((deg % 360) + 360) % 360;
 }
+
+// Sign indices (0=Aries..11=Pisces) where each Pancha Mahapurusha planet is
+// either in its own sign or exalted — the classical condition for its yoga.
+const MAHAPURUSHA_SIGNS: Record<'Mars' | 'Mercury' | 'Jupiter' | 'Venus' | 'Saturn', { signs: number[]; yoga: string }> = {
+  Mars: { signs: [0, 7, 9], yoga: 'Ruchaka Yoga' },
+  Mercury: { signs: [2, 5], yoga: 'Bhadra Yoga' },
+  Jupiter: { signs: [8, 11, 3], yoga: 'Hamsa Yoga' },
+  Venus: { signs: [1, 6, 11], yoga: 'Malavya Yoga' },
+  Saturn: { signs: [9, 10, 6], yoga: 'Sasha Yoga' },
+};
+const KENDRA_HOUSES = [1, 4, 7, 10];
 
 function rashiFor(longitude: number) {
   const norm = normalizeDegrees(longitude);
@@ -100,8 +111,9 @@ export class AstrologyCalculationService {
 
     const dashas = this.computeVimshottariDasha(moon.longitude, dateOfBirth);
     const doshas = this.computeDoshas(planets);
+    const yogas = this.computeYogas(planets);
 
-    return { julianDayUT: jd, ascendant, planets, houses, moonNakshatra, dashas, doshas };
+    return { julianDayUT: jd, ascendant, planets, houses, moonNakshatra, dashas, doshas, yogas };
   }
 
   private toPlanetPosition(graha: Graha, longitude: number, speed: number, ascendantSignIndex: number): PlanetPosition {
@@ -172,6 +184,76 @@ export class AstrologyCalculationService {
         : 'The seven classical planets are distributed on both sides of the Rahu-Ketu axis.',
     };
 
-    return [mangal, kaalSarp];
+    const sun = planets.find((p) => p.graha === 'Sun')!;
+    const pitraAfflicted = sun.house === rahu.house || sun.house === ketu.house;
+    const pitra: DoshaResult = {
+      name: 'Pitra Dosha',
+      present: pitraAfflicted,
+      reason: pitraAfflicted
+        ? `Sun shares house ${sun.house} with ${sun.house === rahu.house ? 'Rahu' : 'Ketu'}, a classical Pitra Dosha (ancestral affliction) indicator${sun.house === 9 ? ', particularly significant here as it falls in the 9th house of ancestry' : ''}.`
+        : 'Sun is not conjunct Rahu or Ketu, so this classical Pitra Dosha indicator is not present.',
+    };
+
+    return [mangal, kaalSarp, pitra];
+  }
+
+  /**
+   * A core, well-defined subset of classical yogas — not the full catalog
+   * (hundreds of named combinations across different schools), which is
+   * out of scope here. See ROADMAP.md.
+   */
+  private computeYogas(planets: PlanetPosition[]): YogaResult[] {
+    const yogas: YogaResult[] = [];
+    const byGraha = Object.fromEntries(planets.map((p) => [p.graha, p])) as Record<string, PlanetPosition>;
+
+    for (const [graha, config] of Object.entries(MAHAPURUSHA_SIGNS)) {
+      const planet = byGraha[graha];
+      const { signIndex } = rashiFor(planet.longitude);
+      const present = config.signs.includes(signIndex) && KENDRA_HOUSES.includes(planet.house);
+      yogas.push({
+        name: config.yoga,
+        present,
+        reason: present
+          ? `${graha} is in its own or exaltation sign (${planet.rashi}) while placed in Kendra house ${planet.house} from the Ascendant — the classical condition for ${config.yoga}.`
+          : `${graha} does not meet both conditions (own/exaltation sign in a Kendra house) for ${config.yoga}.`,
+      });
+    }
+
+    const moon = byGraha.Moon;
+    const jupiter = byGraha.Jupiter;
+    const { signIndex: moonSignIndex } = rashiFor(moon.longitude);
+    const { signIndex: jupiterSignIndex } = rashiFor(jupiter.longitude);
+    const jupiterHouseFromMoon = ((jupiterSignIndex - moonSignIndex + 12) % 12) + 1;
+    const gajakesari = KENDRA_HOUSES.includes(jupiterHouseFromMoon);
+    yogas.push({
+      name: 'Gajakesari Yoga',
+      present: gajakesari,
+      reason: gajakesari
+        ? `Jupiter is in a Kendra position (house ${jupiterHouseFromMoon}) counted from the Moon, the classical condition for Gajakesari Yoga.`
+        : `Jupiter is not in a Kendra position from the Moon (house ${jupiterHouseFromMoon}), so Gajakesari Yoga is not present.`,
+    });
+
+    const sun = byGraha.Sun;
+    const mercury = byGraha.Mercury;
+    const budhaditya = sun.house === mercury.house;
+    yogas.push({
+      name: 'Budhaditya Yoga',
+      present: budhaditya,
+      reason: budhaditya
+        ? `Sun and Mercury are conjunct in house ${sun.house}, the classical condition for Budhaditya Yoga (intellect and communication).`
+        : 'Sun and Mercury are not conjunct, so Budhaditya Yoga is not present.',
+    });
+
+    const mars = byGraha.Mars;
+    const chandraMangal = moon.house === mars.house;
+    yogas.push({
+      name: 'Chandra-Mangal Yoga',
+      present: chandraMangal,
+      reason: chandraMangal
+        ? `Moon and Mars are conjunct in house ${moon.house}, the classical condition for Chandra-Mangal Yoga (financial acumen).`
+        : 'Moon and Mars are not conjunct, so Chandra-Mangal Yoga is not present.',
+    });
+
+    return yogas;
   }
 }

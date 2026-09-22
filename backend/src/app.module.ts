@@ -12,6 +12,10 @@ import { AstrologersModule } from './astrologers/astrologers.module.js';
 import { WalletModule } from './wallet/wallet.module.js';
 import { ConsultationsModule } from './consultations/consultations.module.js';
 import { AdminModule } from './admin/admin.module.js';
+import { MatchmakingModule } from './matchmaking/matchmaking.module.js';
+import { ToolsModule } from './tools/tools.module.js';
+import { MuhuratModule } from './muhurat/muhurat.module.js';
+import { ContentModule } from './content/content.module.js';
 
 @Module({
   imports: [
@@ -28,6 +32,10 @@ import { AdminModule } from './admin/admin.module.js';
     WalletModule,
     ConsultationsModule,
     AdminModule,
+    MatchmakingModule,
+    ToolsModule,
+    MuhuratModule,
+    ContentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

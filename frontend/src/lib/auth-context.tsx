@@ -10,6 +10,8 @@ interface AuthContextValue {
   loading: boolean;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   registerWithEmail: (email: string, password: string) => Promise<void>;
+  requestPhoneOtp: (phone: string, purpose: "REGISTER" | "LOGIN") => Promise<void>;
+  verifyPhoneOtp: (phone: string, code: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -52,6 +54,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     persist(auth);
   }
 
+  async function requestPhoneOtp(phone: string, purpose: "REGISTER" | "LOGIN") {
+    await api.post("/auth/otp/request", { phone, purpose });
+  }
+
+  async function verifyPhoneOtp(phone: string, code: string) {
+    const auth = await api.post<AuthResponse>("/auth/otp/verify", { phone, code });
+    persist(auth);
+  }
+
   function logout() {
     localStorage.removeItem(STORAGE_KEY);
     setUser(null);
@@ -59,7 +70,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, loginWithEmail, registerWithEmail, logout }}>
+    <AuthContext.Provider
+      value={{ user, token, loading, loginWithEmail, registerWithEmail, requestPhoneOtp, verifyPhoneOtp, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

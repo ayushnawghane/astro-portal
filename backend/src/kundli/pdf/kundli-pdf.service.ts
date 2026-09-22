@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import PDFDocument from 'pdfkit';
-import type { DashaPeriod, DoshaResult, PlanetPosition } from '../astrology/astrology.types.js';
+import type { DashaPeriod, DoshaResult, PlanetPosition, YogaResult } from '../astrology/astrology.types.js';
 
 interface KundliPdfInput {
   profileName: string;
@@ -13,6 +13,7 @@ interface KundliPdfInput {
   moonNakshatra: { name: string; pada: number };
   dashas: DashaPeriod[];
   doshas: DoshaResult[];
+  yogas: YogaResult[];
   generatedAt: Date;
 }
 
@@ -59,13 +60,23 @@ export class KundliPdfService {
     doc.fontSize(14).text('Dosha Check');
     doc.fontSize(10);
     input.doshas.forEach((d) => doc.text(`${d.name}: ${d.present ? 'Present' : 'Not present'} — ${d.reason}`));
+    doc.moveDown(1);
+
+    doc.fontSize(14).text('Yogas');
+    doc.fontSize(10);
+    const presentYogas = input.yogas.filter((y) => y.present);
+    if (presentYogas.length === 0) {
+      doc.text('None of the checked classical yogas are present in this chart.');
+    } else {
+      presentYogas.forEach((y) => doc.text(`${y.name} — ${y.reason}`));
+    }
 
     doc.moveDown(1.5);
     doc
       .fontSize(8)
       .fillColor('#888')
       .text(
-        'Computed using the Swiss Ephemeris (Moshier semi-analytical mode) with Lahiri ayanamsa. Whole-sign house system. Yoga identification is not yet included.',
+        'Computed using the Swiss Ephemeris (Moshier semi-analytical mode) with Lahiri ayanamsa. Whole-sign house system. Yoga check covers a core set of classical combinations, not the full traditional catalog.',
       );
 
     doc.end();

@@ -30,6 +30,8 @@ export interface DoshaResult {
   reason: string;
 }
 
+export type YogaResult = DoshaResult;
+
 export interface BirthChartResult {
   julianDayUT: number;
   ascendant: AscendantInfo;
@@ -38,4 +40,5 @@ export interface BirthChartResult {
   moonNakshatra: { name: string; pada: number };
   dashas: DashaPeriod[];
   doshas: DoshaResult[];
+  yogas: YogaResult[];
 }

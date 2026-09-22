@@ -78,4 +78,28 @@ export class ConsultationsGateway implements OnGatewayConnection {
   typing(@ConnectedSocket() client: AuthenticatedSocket, @MessageBody() body: { consultationId: string; isTyping: boolean }) {
     client.to(body.consultationId).emit('typing', { userId: client.data.userId, isTyping: body.isTyping });
   }
+
+  // WebRTC signaling relay for voice consultations. Membership in the room
+  // (joinConsultation) already restricts this to the two authorized parties,
+  // so these handlers just forward the SDP/ICE payloads verbatim.
+
+  @SubscribeMessage('voice:offer')
+  voiceOffer(@ConnectedSocket() client: AuthenticatedSocket, @MessageBody() body: { consultationId: string; sdp: unknown }) {
+    client.to(body.consultationId).emit('voice:offer', { sdp: body.sdp });
+  }
+
+  @SubscribeMessage('voice:answer')
+  voiceAnswer(@ConnectedSocket() client: AuthenticatedSocket, @MessageBody() body: { consultationId: string; sdp: unknown }) {
+    client.to(body.consultationId).emit('voice:answer', { sdp: body.sdp });
+  }
+
+  @SubscribeMessage('voice:ice-candidate')
+  voiceIceCandidate(@ConnectedSocket() client: AuthenticatedSocket, @MessageBody() body: { consultationId: string; candidate: unknown }) {
+    client.to(body.consultationId).emit('voice:ice-candidate', { candidate: body.candidate });
+  }
+
+  @SubscribeMessage('voice:hangup')
+  voiceHangup(@ConnectedSocket() client: AuthenticatedSocket, @MessageBody() body: { consultationId: string }) {
+    client.to(body.consultationId).emit('voice:hangup', {});
+  }
 }

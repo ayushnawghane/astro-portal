@@ -164,6 +164,24 @@ export default function KundliPage() {
               ))}
             </ul>
           </Card>
+
+          <Card>
+            <h2 className="text-2xl font-semibold mb-4">Yogas</h2>
+            {latest.yogas.filter((y) => y.present).length === 0 ? (
+              <p className="text-lg text-muted">None of the checked classical yogas are present in this chart.</p>
+            ) : (
+              <ul className="text-lg flex flex-col gap-3">
+                {latest.yogas
+                  .filter((y) => y.present)
+                  .map((y) => (
+                    <li key={y.name}>
+                      <span className="font-semibold text-accent">{y.name}</span>
+                      <p className="text-base text-muted">{y.reason}</p>
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </Card>
         </div>
       )}
     </div>

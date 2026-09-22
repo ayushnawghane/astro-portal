@@ -4,7 +4,7 @@ import { KundliService } from './kundli.service.js';
 import { KundliPdfService } from './pdf/kundli-pdf.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CurrentUser, type AuthenticatedUser } from '../auth/decorators/current-user.decorator.js';
-import type { DashaPeriod, DoshaResult, PlanetPosition } from './astrology/astrology.types.js';
+import type { DashaPeriod, DoshaResult, PlanetPosition, YogaResult } from './astrology/astrology.types.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('kundli')
@@ -48,6 +48,7 @@ export class KundliController {
       moonNakshatra: chartData.moonNakshatra,
       dashas: report.dashaInfo as unknown as DashaPeriod[],
       doshas: report.doshas as unknown as DoshaResult[],
+      yogas: (report.yogas ?? []) as unknown as YogaResult[],
       generatedAt: report.createdAt,
     });
 

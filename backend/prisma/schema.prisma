@@ -73,16 +73,16 @@ enum HoroscopeType {
 }
 
 model User {
-  id              String    @id @default(cuid())
-  email           String?   @unique
-  phone           String?   @unique
+  id              String   @id @default(cuid())
+  email           String?  @unique
+  phone           String?  @unique
   passwordHash    String?
-  role            UserRole  @default(USER)
-  isEmailVerified Boolean   @default(false)
-  isPhoneVerified Boolean   @default(false)
-  hasUsedFreeChat Boolean   @default(false)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  role            UserRole @default(USER)
+  isEmailVerified Boolean  @default(false)
+  isPhoneVerified Boolean  @default(false)
+  hasUsedFreeChat Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   profiles      Profile[]
   wallet        Wallet?
@@ -95,34 +95,34 @@ model User {
 }
 
 model OtpCode {
-  id        String   @id @default(cuid())
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  target    String // email or phone the OTP was sent to
-  codeHash  String
-  purpose   String // REGISTER | LOGIN | PASSWORD_RESET
-  expiresAt DateTime
+  id         String    @id @default(cuid())
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  target     String // email or phone the OTP was sent to
+  codeHash   String
+  purpose    String // REGISTER | LOGIN | PASSWORD_RESET
+  expiresAt  DateTime
   consumedAt DateTime?
-  createdAt DateTime @default(now())
+  createdAt  DateTime  @default(now())
 
   @@index([target, purpose])
 }
 
 model Profile {
-  id            String          @id @default(cuid())
-  userId        String
-  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  relation      ProfileRelation @default(SELF)
-  name          String
-  gender        Gender
-  dateOfBirth   DateTime
-  timeOfBirth   String // stored as HH:mm (24h)
-  placeOfBirth  String
-  latitude      Float?
-  longitude     Float?
-  timezone      String?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id           String          @id @default(cuid())
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  relation     ProfileRelation @default(SELF)
+  name         String
+  gender       Gender
+  dateOfBirth  DateTime
+  timeOfBirth  String // stored as HH:mm (24h)
+  placeOfBirth String
+  latitude     Float?
+  longitude    Float?
+  timezone     String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 
   kundliReports KundliReport[]
 
@@ -146,24 +146,24 @@ model KundliReport {
 }
 
 model Astrologer {
-  id                   String          @id @default(cuid())
-  userId               String          @unique
-  user                 User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  displayName          String
-  bio                  String?
-  experienceYears      Int             @default(0)
-  languages            String[]
-  expertise            String[]
-  pricePerMinuteChat   Decimal         @db.Decimal(10, 2)
-  pricePerMinuteVoice  Decimal?        @db.Decimal(10, 2)
-  badge                AstrologerBadge @default(NEW)
-  onboardingStage      OnboardingStage @default(APPLICATION_SUBMITTED)
-  isApproved           Boolean         @default(false)
-  isAvailable          Boolean         @default(false)
-  ratingAvg            Float           @default(0)
-  ratingCount          Int             @default(0)
-  createdAt            DateTime        @default(now())
-  updatedAt            DateTime        @updatedAt
+  id                  String          @id @default(cuid())
+  userId              String          @unique
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName         String
+  bio                 String?
+  experienceYears     Int             @default(0)
+  languages           String[]
+  expertise           String[]
+  pricePerMinuteChat  Decimal         @db.Decimal(10, 2)
+  pricePerMinuteVoice Decimal?        @db.Decimal(10, 2)
+  badge               AstrologerBadge @default(NEW)
+  onboardingStage     OnboardingStage @default(APPLICATION_SUBMITTED)
+  isApproved          Boolean         @default(false)
+  isAvailable         Boolean         @default(false)
+  ratingAvg           Float           @default(0)
+  ratingCount         Int             @default(0)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
 
   consultations Consultation[]
   reviews       Review[]
@@ -173,11 +173,11 @@ model Astrologer {
 }
 
 model Wallet {
-  id           String               @id @default(cuid())
-  userId       String               @unique
-  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  balance      Decimal              @default(0) @db.Decimal(10, 2)
-  updatedAt    DateTime             @updatedAt
+  id           String              @id @default(cuid())
+  userId       String              @unique
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance      Decimal             @default(0) @db.Decimal(10, 2)
+  updatedAt    DateTime            @updatedAt
   transactions WalletTransaction[]
 }
 
@@ -261,8 +261,8 @@ model Horoscope {
 }
 
 model Panchang {
-  id         String   @id @default(cuid())
-  date       DateTime @db.Date
+  id         String    @id @default(cuid())
+  date       DateTime  @db.Date
   location   String
   latitude   Float
   longitude  Float
@@ -277,7 +277,42 @@ model Panchang {
   rahuKaal   String
   gulikaKaal String
   yamaganda  String
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
 
   @@unique([date, location])
+}
+
+model ShubhMuhurat {
+  id           String   @id @default(cuid())
+  activityType String // e.g. "marriage", "griha-pravesh", "vehicle-purchase", "naming-ceremony", "business-opening"
+  date         DateTime @db.Date
+  title        String
+  description  String
+  timings      Json // [{ start: "10:00", end: "11:30", quality: "Best" }, ...]
+  createdAt    DateTime @default(now())
+
+  @@unique([activityType, date])
+  @@index([activityType, date])
+}
+
+enum ContentCategory {
+  BLOG
+  EDUCATION
+}
+
+model Content {
+  id            String          @id @default(cuid())
+  category      ContentCategory
+  slug          String          @unique
+  title         String
+  summary       String
+  body          String
+  tags          String[]
+  coverImageUrl String?
+  isPublished   Boolean         @default(false)
+  publishedAt   DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([category, isPublished, publishedAt])
 }
